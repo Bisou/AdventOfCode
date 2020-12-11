@@ -18,21 +18,23 @@ namespace AdventOfCode
             var intCodes = new IntCodeRunner[5];
             var code = file.ReadLine().Split(',').Select(int.Parse).ToArray();
             var max=int.MinValue;
-            var phases = new []{0,1,2,3,4};
-            //var phases = new []{5,6,7,8,9};
+            //var phases = new []{0,1,2,3,4};
+            var phases = new []{5,6,7,8,9};
             do
             {
-                //Console.WriteLine($"Check {string.Join("",phases)}");
                 for (var i=0;i<5;i++)
                 {
                     intCodes[i] = new IntCodeRunner(code, phases[i]);
                 }
                 var input=0;
-                for (var i=0;i<5;i++)
+                var amplifierId=0;
+                while(true)
                 {
-                    input = intCodes[i].Run(input);
+                    input = intCodes[amplifierId].Run(input);
+                    if (intCodes[amplifierId].Stopped) break;
+                    amplifierId = (amplifierId+1)%5;
                 }
-                max = Math.Max(max, input);
+                max = Math.Max(max, intCodes[4].LastOutput);
             } while(!NextPermutation(phases));
             
             Console.WriteLine($"answer is {max}");
@@ -82,6 +84,10 @@ namespace AdventOfCode
         private int[] data;
         private int phase;
         private int index=0;
+        public int LastOutput;
+        public bool Stopped = false;
+        public bool initPhaseDone = false;
+
         public IntCodeRunner(int[] program, int phase)
         {
             data = new int[program.Length];
@@ -91,14 +97,16 @@ namespace AdventOfCode
 
         public int Run(int input)
         {
-            var initPhaseDone=false;
             var output=0;
             while (index<data.Length)
             {
                 var instruction = data[index];
                 var operation = GetOperation(instruction);
                 if (operation==99) 
+                {
+                    Stopped=true;    
                     break;
+                }
                 else if (operation==1)
                 {
                     data[data[index+3]] = GetParameterValue(instruction,1) + GetParameterValue(instruction,2);
@@ -123,7 +131,9 @@ namespace AdventOfCode
                 else if (operation==4)
                 {
                     output = GetParameterValue(instruction,1);
+                    LastOutput = output;
                     index+=2;
+                    return output;
                 }
                 else if (operation == 5)
                 {
