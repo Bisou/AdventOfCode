@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -15,28 +15,82 @@ namespace AdventOfCode
             //{
              //   adapters.Add(int.Parse(line));
             //}
-            var intCode = new IntCodeRunner(file.ReadLine().Split(',').Select(int.Parse).ToArray());
-            var output = intCode.Run();
-            Console.WriteLine($"answer is {output}");
+            var intCodes = new IntCodeRunner[5];
+            var code = file.ReadLine().Split(',').Select(int.Parse).ToArray();
+            var max=int.MinValue;
+            var phases = new []{0,1,2,3,4};
+            do
+            {
+                //Console.WriteLine($"Check {string.Join("",phases)}");
+                for (var i=0;i<5;i++)
+                {
+                    intCodes[i] = new IntCodeRunner(code, phases[i]);
+                }
+                var input=0;
+                for (var i=0;i<5;i++)
+                {
+                    input = intCodes[i].Run(input);
+                }
+                max = Math.Max(max, input);
+            } while(!NextPermutation(phases));
+            
+            Console.WriteLine($"answer is {max}");
         }
+
+        public static bool NextPermutation(int[] nums)
+        {
+            var count = nums.Length;
+            var done = true;
+            for (var i = count - 1; i > 0; i--)
+            {
+                var curr = nums[i];
+                if (curr <= nums[i - 1])
+                    continue;
+                done = false;
+                var prev = nums[i - 1];
+                var currIndex = i;
+
+                for (int j = i + 1; j < count; j++)
+                {
+                    var tmp = nums[j];
+                    if (tmp <= curr && tmp > prev)
+                    {
+                        curr = tmp;
+                        currIndex = j;
+                    }
+                }
+                nums[currIndex] = prev;
+                nums[i - 1] = curr;
+                // Reverse the end
+                for (int j = count - 1; j > i; j--, i++)
+                {
+                    var tmp = nums[j];
+                    nums[j] = nums[i];
+                    nums[i] = tmp;
+                }
+                break;
+            }
+            return done;
+        }
+
     }
 
     //Advent of Code 2019... keep it until it is over
     class IntCodeRunner
     {
         private int[] data;
-        public IntCodeRunner(int[] program)
+        private int phase;
+        public IntCodeRunner(int[] program, int phase)
         {
             data = new int[program.Length];
             for (var i=0;i<data.Length;i++) data[i]=program[i];
+            this.phase = phase;
         }
 
-        public int Run()
+        public int Run(int input)
         {
-            var input=5;
+            var initPhaseDone=false;
             var output=0;
-            //data[1]=noun;
-            //data[2]=verb;
             var i=0;
             while (i<data.Length)
             {
@@ -46,21 +100,23 @@ namespace AdventOfCode
                     break;
                 else if (operation==1)
                 {
-                    Console.WriteLine($"{instruction},{data[i+1]},{data[i+2]},{data[i+3]}");
                     data[data[i+3]] = GetParameterValue(data[i+1], instruction,1) + GetParameterValue(data[i+2],instruction,2);
-                    Console.WriteLine($"Adding {GetParameterValue(data[i+1], instruction,1)} and {GetParameterValue(data[i+2],instruction,2)} to store it in data[{data[i+3]}]");
                     i+=4;
                 }
                 else if (operation==2)
                 {
-                    Console.WriteLine($"{instruction},{data[i+1]},{data[i+2]},{data[i+3]}");
                     data[data[i+3]] = GetParameterValue(data[i+1], instruction,1) * GetParameterValue(data[i+2],instruction,2);
-                    Console.WriteLine($"Multiply {GetParameterValue(data[i+1], instruction,1)} and {GetParameterValue(data[i+2],instruction,2)} to store it in data[{data[i+3]}]");
                     i+=4;
                 }   
                 else if (operation==3)
                 {
-                    data[data[i+1]]=input;
+                    if (initPhaseDone)
+                        data[data[i+1]]=input;
+                    else
+                    {
+                        data[data[i+1]]=phase;
+                        initPhaseDone = true;
+                    }
                     i+=2;
                 }   
                 else if (operation==4)
