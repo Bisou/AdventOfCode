@@ -19,6 +19,7 @@ namespace AdventOfCode
             var code = file.ReadLine().Split(',').Select(int.Parse).ToArray();
             var max=int.MinValue;
             var phases = new []{0,1,2,3,4};
+            //var phases = new []{5,6,7,8,9};
             do
             {
                 //Console.WriteLine($"Check {string.Join("",phases)}");
@@ -80,6 +81,7 @@ namespace AdventOfCode
     {
         private int[] data;
         private int phase;
+        private int index=0;
         public IntCodeRunner(int[] program, int phase)
         {
             data = new int[program.Length];
@@ -91,68 +93,67 @@ namespace AdventOfCode
         {
             var initPhaseDone=false;
             var output=0;
-            var i=0;
-            while (i<data.Length)
+            while (index<data.Length)
             {
-                var instruction = data[i];
+                var instruction = data[index];
                 var operation = GetOperation(instruction);
                 if (operation==99) 
                     break;
                 else if (operation==1)
                 {
-                    data[data[i+3]] = GetParameterValue(data[i+1], instruction,1) + GetParameterValue(data[i+2],instruction,2);
-                    i+=4;
+                    data[data[index+3]] = GetParameterValue(data[index+1], instruction,1) + GetParameterValue(data[index+2],instruction,2);
+                    index+=4;
                 }
                 else if (operation==2)
                 {
-                    data[data[i+3]] = GetParameterValue(data[i+1], instruction,1) * GetParameterValue(data[i+2],instruction,2);
-                    i+=4;
+                    data[data[index+3]] = GetParameterValue(data[index+1], instruction,1) * GetParameterValue(data[index+2],instruction,2);
+                    index+=4;
                 }   
                 else if (operation==3)
                 {
                     if (initPhaseDone)
-                        data[data[i+1]]=input;
+                        data[data[index+1]]=input;
                     else
                     {
-                        data[data[i+1]]=phase;
+                        data[data[index+1]]=phase;
                         initPhaseDone = true;
                     }
-                    i+=2;
+                    index+=2;
                 }   
                 else if (operation==4)
                 {
-                    output = GetParameterValue(data[i+1], instruction,1);
-                    i+=2;
+                    output = GetParameterValue(data[index+1], instruction,1);
+                    index+=2;
                 }
                 else if (operation == 5)
                 {
-                    if (GetParameterValue(data[i+1], instruction,1) != 0)
-                        i = GetParameterValue(data[i+2],instruction,2);
+                    if (GetParameterValue(data[index+1], instruction,1) != 0)
+                        index = GetParameterValue(data[index+2],instruction,2);
                     else
-                        i+=3;
+                        index+=3;
                 }
                 else if (operation == 6)
                 {
-                    if (GetParameterValue(data[i+1], instruction,1) == 0)
-                        i = GetParameterValue(data[i+2],instruction,2);
+                    if (GetParameterValue(data[index+1], instruction,1) == 0)
+                        index = GetParameterValue(data[index+2],instruction,2);
                     else
-                        i+=3;
+                        index+=3;
                 }
                 else if (operation == 7)
                 {
-                    if (GetParameterValue(data[i+1], instruction,1) < GetParameterValue(data[i+2],instruction,2))
-                        data[data[i+3]] =1;
+                    if (GetParameterValue(data[index+1], instruction,1) < GetParameterValue(data[index+2],instruction,2))
+                        data[data[index+3]] =1;
                     else
-                        data[data[i+3]]=0;
-                    i+=4;
+                        data[data[index+3]]=0;
+                    index+=4;
                 }
                 else if (operation == 8)
                 {
-                    if (GetParameterValue(data[i+1], instruction,1) == GetParameterValue(data[i+2],instruction,2))
-                        data[data[i+3]] =1;
+                    if (GetParameterValue(data[index+1], instruction,1) == GetParameterValue(data[index+2],instruction,2))
+                        data[data[index+3]] =1;
                     else
-                        data[data[i+3]]=0;
-                    i+=4;
+                        data[data[index+3]]=0;
+                    index+=4;
                 }
             }
             return output;
