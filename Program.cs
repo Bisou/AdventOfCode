@@ -101,12 +101,12 @@ namespace AdventOfCode
                     break;
                 else if (operation==1)
                 {
-                    data[data[index+3]] = GetParameterValue(data[index+1], instruction,1) + GetParameterValue(data[index+2],instruction,2);
+                    data[data[index+3]] = GetParameterValue(instruction,1) + GetParameterValue(instruction,2);
                     index+=4;
                 }
                 else if (operation==2)
                 {
-                    data[data[index+3]] = GetParameterValue(data[index+1], instruction,1) * GetParameterValue(data[index+2],instruction,2);
+                    data[data[index+3]] = GetParameterValue(instruction,1) * GetParameterValue(instruction,2);
                     index+=4;
                 }   
                 else if (operation==3)
@@ -122,26 +122,26 @@ namespace AdventOfCode
                 }   
                 else if (operation==4)
                 {
-                    output = GetParameterValue(data[index+1], instruction,1);
+                    output = GetParameterValue(instruction,1);
                     index+=2;
                 }
                 else if (operation == 5)
                 {
-                    if (GetParameterValue(data[index+1], instruction,1) != 0)
-                        index = GetParameterValue(data[index+2],instruction,2);
+                    if (GetParameterValue(instruction,1) != 0)
+                        index = GetParameterValue(instruction,2);
                     else
                         index+=3;
                 }
                 else if (operation == 6)
                 {
-                    if (GetParameterValue(data[index+1], instruction,1) == 0)
-                        index = GetParameterValue(data[index+2],instruction,2);
+                    if (GetParameterValue(instruction,1) == 0)
+                        index = GetParameterValue(instruction,2);
                     else
                         index+=3;
                 }
                 else if (operation == 7)
                 {
-                    if (GetParameterValue(data[index+1], instruction,1) < GetParameterValue(data[index+2],instruction,2))
+                    if (GetParameterValue(instruction,1) < GetParameterValue(instruction,2))
                         data[data[index+3]] =1;
                     else
                         data[data[index+3]]=0;
@@ -149,7 +149,7 @@ namespace AdventOfCode
                 }
                 else if (operation == 8)
                 {
-                    if (GetParameterValue(data[index+1], instruction,1) == GetParameterValue(data[index+2],instruction,2))
+                    if (GetParameterValue(instruction,1) == GetParameterValue(instruction,2))
                         data[data[index+3]] =1;
                     else
                         data[data[index+3]]=0;
@@ -164,10 +164,11 @@ namespace AdventOfCode
             return value % 100;
         }
 
-        private int GetParameterValue(int value, int instruction, int index)
+        private int GetParameterValue(int instruction, int shift)
         {
+            var value = data[index+shift];
             var key = instruction.ToString();
-            var modePosition = key.Length-2-index;
+            var modePosition = key.Length-2-shift;
             if (modePosition<0 || key[modePosition]=='0')
                 return data[value];
             return value;
