@@ -9,35 +9,25 @@ namespace AdventOfCode
         static void Main()
         {
             var file = new System.IO.StreamReader(         @"C:\Users\Bisou\Documents\Seb\FacebookHackerCup\2020\RunningOnFumesChapter1\input");  
-           // string line;
-           // var adapters = new List<int>();
-            //while ((line=file.ReadLine())!=null)
-            //{
-             //   adapters.Add(int.Parse(line));
-            //}
-            var intCodes = new IntCodeRunner[5];
-            var code = file.ReadLine().Split(',').Select(int.Parse).ToArray();
-            var max=int.MinValue;
-            //var phases = new []{0,1,2,3,4};
-            var phases = new []{5,6,7,8,9};
-            do
+            /*string line;
+            var orders = new List<string>();
+            while ((line=file.ReadLine())!=null)
             {
-                for (var i=0;i<5;i++)
-                {
-                    intCodes[i] = new IntCodeRunner(code, phases[i]);
-                }
-                var input=0;
-                var amplifierId=0;
-                while(true)
-                {
-                    input = intCodes[amplifierId].Run(input);
-                    if (intCodes[amplifierId].Stopped) break;
-                    amplifierId = (amplifierId+1)%5;
-                }
-                max = Math.Max(max, intCodes[4].LastOutput);
-            } while(!NextPermutation(phases));
-            
-            Console.WriteLine($"answer is {max}");
+               orders.Add(line);
+            }*/
+            var code = file.ReadLine().Split(',').Select(long.Parse).ToArray();
+            var intCode = new IntCodeRunner(code,0);
+            //var phases = new []{5,6,7,8,9};
+            var output = new List<long>();
+            var input=1L;
+            while(true)
+            {
+                input = intCode.Run(input);
+                output.Add(input);
+                if (intCode.Stopped) break;                    
+            }
+                
+            Console.WriteLine($"{string.Join(",",output)}");
         }
 
         public static bool NextPermutation(int[] nums)
@@ -81,26 +71,30 @@ namespace AdventOfCode
     //Advent of Code 2019... keep it until it is over
     class IntCodeRunner
     {
-        private int[] data;
+        private Dictionary<long,long> memory;
+        private long relativeBase=0;
         private int phase;
-        private int index=0;
-        public int LastOutput;
+        private long index=0;
+        public long LastOutput;
         public bool Stopped = false;
-        public bool initPhaseDone = false;
+        public bool initPhaseDone = true;//no phase
 
-        public IntCodeRunner(int[] program, int phase)
+        public IntCodeRunner(long[] program, int phase)
         {
-            data = new int[program.Length];
-            for (var i=0;i<data.Length;i++) data[i]=program[i];
+            memory = new Dictionary<long, long>();            
+            for (var i=0;i<program.Length;i++) 
+            {                
+                SetMemory(i, program[i]);
+            }
             this.phase = phase;
         }
 
-        public int Run(int input)
+        public long Run(long input)
         {
-            var output=0;
-            while (index<data.Length)
+            var output=0L;
+            while (true)
             {
-                var instruction = data[index];
+                var instruction = ReadMemory(index);
                 var operation = GetOperation(instruction);
                 if (operation==99) 
                 {
@@ -109,21 +103,21 @@ namespace AdventOfCode
                 }
                 else if (operation==1)
                 {
-                    data[data[index+3]] = GetParameterValue(instruction,1) + GetParameterValue(instruction,2);
+                    SetMemory(GetParameterValue(instruction,3,true), GetParameterValue(instruction,1) + GetParameterValue(instruction,2));
                     index+=4;
                 }
                 else if (operation==2)
                 {
-                    data[data[index+3]] = GetParameterValue(instruction,1) * GetParameterValue(instruction,2);
+                    SetMemory(GetParameterValue(instruction,3,true), GetParameterValue(instruction,1) * GetParameterValue(instruction,2));
                     index+=4;
                 }   
                 else if (operation==3)
                 {
                     if (initPhaseDone)
-                        data[data[index+1]]=input;
+                        SetMemory(GetParameterValue(instruction,1,true),input);
                     else
                     {
-                        data[data[index+1]]=phase;
+                        SetMemory(GetParameterValue(instruction,1,true),phase);
                         initPhaseDone = true;
                     }
                     index+=2;
@@ -152,36 +146,65 @@ namespace AdventOfCode
                 else if (operation == 7)
                 {
                     if (GetParameterValue(instruction,1) < GetParameterValue(instruction,2))
-                        data[data[index+3]] =1;
+                        SetMemory(GetParameterValue(instruction,3,true),1);
                     else
-                        data[data[index+3]]=0;
+                        SetMemory(GetParameterValue(instruction,3,true),0);
                     index+=4;
                 }
                 else if (operation == 8)
                 {
                     if (GetParameterValue(instruction,1) == GetParameterValue(instruction,2))
-                        data[data[index+3]] =1;
+                        SetMemory(GetParameterValue(instruction,3,true),1);
                     else
-                        data[data[index+3]]=0;
+                        SetMemory(GetParameterValue(instruction,3,true),0);
                     index+=4;
+                }
+                else if (operation == 9)
+                {
+                    relativeBase += GetParameterValue(instruction,1);
+                    index+=2;
                 }
             }
             return output;
         }
 
-        private int GetOperation(int value)
+        private int GetOperation(long value)
         {
-            return value % 100;
+            return (int)(value % 100);
         }
 
-        private int GetParameterValue(int instruction, int shift)
+        public const char PositionMode = '0';
+        public const char ValueMode = '1';
+        public const char RelativeMode = '2';
+        
+        private long GetParameterValue(long instruction, int shift, bool forWriting=false)
         {
-            var value = data[index+shift];
+            var value = ReadMemory(index+shift);
             var key = instruction.ToString();
             var modePosition = key.Length-2-shift;
-            if (modePosition<0 || key[modePosition]=='0')
-                return data[value];
+            if (modePosition<0 || key[modePosition]==PositionMode)
+                if (forWriting)
+                    return value;
+                else
+                    return ReadMemory(value);
+            else if (key[modePosition] == RelativeMode)
+                if (forWriting)
+                    return relativeBase + value;
+                else
+                    return ReadMemory(relativeBase + value);
             return value;
+        }
+
+        private void SetMemory(long address, long value)
+        {
+            memory[address] = value;
+        }
+
+        private long ReadMemory(long address)
+        {
+            if (!memory.ContainsKey(address))
+                memory.Add(address,0);
+            return memory[address];
         }
     }
 }
