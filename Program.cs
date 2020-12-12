@@ -18,16 +18,42 @@ namespace AdventOfCode
             var code = file.ReadLine().Split(',').Select(long.Parse).ToArray();
             var intCode = new IntCodeRunner(code,0);
             //var phases = new []{5,6,7,8,9};
-            var output = new List<long>();
-            var input=1L;
+            var hull = new int[10000,10000];
+            var row=5000;
+            var col=5000;
+            var facing=0;//UP
+            var rowShift=new []{-1,0,1,0};//UP,XXXXX,DOWN,XXXX
+            var colShift=new []{0,1,0,-1};//XX,RIGHT,XXXX,LEFT
+            var seen = new bool[10000,10000];
+            var count=0;
+            var input=2L;
+            
             while(true)
             {
-                input = intCode.Run(input);
-                output.Add(input);
+                input = hull[row,col];
+                var color= intCode.Run(input);
+                if (!seen[row,col])
+                {
+                    count++;
+                    seen[row,col]=true;
+                }
+                hull[row,col]=(int)color;
+                var turn = intCode.Run(input);
+                if (turn==1)//right
+                    facing = (facing+1)%4;
+                else if (turn==0)//left
+                    facing=(facing+3)%4;
+                else
+                {
+                    var test=0;
+                }
+                Console.Error.WriteLine($"We are in (row={row},col={col}) facing {facing}, color is {color} and we turn {turn}");
+                row+=rowShift[facing];
+                col+=colShift[facing];
                 if (intCode.Stopped) break;                    
             }
                 
-            Console.WriteLine($"{string.Join(",",output)}");
+            Console.WriteLine($"{count}");
         }
 
         public static bool NextPermutation(int[] nums)
@@ -113,6 +139,7 @@ namespace AdventOfCode
                 }   
                 else if (operation==3)
                 {
+                    Console.Error.WriteLine($"requesting color {input}");
                     if (initPhaseDone)
                         SetMemory(GetParameterValue(instruction,1,true),input);
                     else
