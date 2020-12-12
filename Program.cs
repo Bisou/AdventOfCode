@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -26,8 +27,12 @@ namespace AdventOfCode
             var colShift=new []{0,1,0,-1};//XX,RIGHT,XXXX,LEFT
             var seen = new bool[10000,10000];
             var count=0;
+            hull[row,col]=1;
             var input=2L;
-            
+            var minRow=row;
+            var maxRow=row;
+            var minCol=col;
+            var maxCol=col;
             while(true)
             {
                 input = hull[row,col];
@@ -50,10 +55,21 @@ namespace AdventOfCode
                 Console.Error.WriteLine($"We are in (row={row},col={col}) facing {facing}, color is {color} and we turn {turn}");
                 row+=rowShift[facing];
                 col+=colShift[facing];
+                minRow=Math.Min(minRow,row);
+                maxRow=Math.Max(maxRow,row);
+                minCol=Math.Min(minCol,col);
+                maxCol=Math.Max(maxCol,col);
                 if (intCode.Stopped) break;                    
             }
+            for (var r = minRow;r<=maxRow;r++)
+            {
+                var sb=new StringBuilder();
+                for (var c=minCol;c<=maxCol;c++)
+                    sb.Append(hull[r,c]==1?'#':' ');
+                Console.WriteLine(sb.ToString());
                 
-            Console.WriteLine($"{count}");
+            }
+            //Console.WriteLine($"{count}");
         }
 
         public static bool NextPermutation(int[] nums)
