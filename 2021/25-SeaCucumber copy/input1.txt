@@ -1,0 +1,7 @@
+6
+22:55:14 Lyon-Paris 1595
+16:33:17 Paris-Lyon 231
+10:15:04 Lyon-Paris 258
+11:28:21 Paris-Lyon 865
+09:30:54 Paris-Lyon 1332
+16:31:40 Lyon-Paris 350
